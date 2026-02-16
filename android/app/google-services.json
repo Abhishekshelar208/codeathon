@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "727606836878",
+    "project_id": "codeathon2",
+    "storage_bucket": "codeathon2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:727606836878:android:ad1343a6165091082593df",
+        "android_client_info": {
+          "package_name": "com.example.codeathon"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBbYZHEwDLF6S4JKXVPBrGPFsdIF04zWtw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
