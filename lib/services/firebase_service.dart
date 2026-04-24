@@ -3,6 +3,8 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:codeathon/core/constants.dart';
 import 'package:codeathon/models/team_model.dart';
 import 'package:codeathon/models/event_model.dart';
+import 'package:codeathon/models/volunteer_model.dart';
+import 'package:uuid/uuid.dart';
 
 /// All Firebase Realtime Database interactions are centralised here.
 /// Consumers observe [Stream]s for live updates or call one-shot methods.
@@ -87,6 +89,98 @@ class FirebaseService {
         ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
       return list;
     });
+  }
+
+  // ── Volunteer Management ──────────────────────────────────────────────────
+
+  /// Creates a new volunteer in the system.
+  Future<void> createVolunteer(String eventId, String name) async {
+    final volId = const Uuid().v4().substring(0, 8); // Simple suffix
+    final volunteerId = 'vol_$volId';
+    final volunteer = VolunteerModel(
+      volunteerId: volunteerId,
+      eventId: eventId,
+      name: name,
+      qrPayload: AppConstants.buildVolunteerQrPayload(eventId, volId),
+      createdAt: DateTime.now().millisecondsSinceEpoch,
+    );
+
+    await _db
+        .ref(AppConstants.volunteerPath(eventId, volunteerId))
+        .set(volunteer.toJson());
+  }
+
+  /// Updates an existing volunteer's details.
+  Future<void> updateVolunteer(String eventId, VolunteerModel volunteer) async {
+    await _db
+        .ref(AppConstants.volunteerPath(eventId, volunteer.volunteerId))
+        .update(volunteer.toJson());
+  }
+
+  /// Deletes a volunteer from the system.
+  Future<void> deleteVolunteer(String eventId, String volunteerId) async {
+    await _db.ref(AppConstants.volunteerPath(eventId, volunteerId)).remove();
+  }
+
+  /// Live stream of all volunteers for the given event.
+  Stream<List<VolunteerModel>> volunteersStream(String eventId) {
+    return _db
+        .ref(AppConstants.volunteersPath(eventId))
+        .onValue
+        .map((event) {
+      if (event.snapshot.value == null) return <VolunteerModel>[];
+      final raw = (event.snapshot.value as Map).cast<String, dynamic>();
+      final list = raw.entries
+          .map((e) => VolunteerModel.fromJson(e.key, e.value as Map))
+          .toList();
+      list.sort((a, b) => a.name.compareTo(b.name));
+      return list;
+    });
+  }
+
+  /// Fetches a single volunteer by id.
+  Future<VolunteerModel?> fetchVolunteer(
+      String eventId, String volunteerId) async {
+    final snapshot =
+        await _db.ref(AppConstants.volunteerPath(eventId, volunteerId)).get();
+    if (!snapshot.exists || snapshot.value == null) return null;
+    return VolunteerModel.fromJson(
+        volunteerId, (snapshot.value as Map).cast<dynamic, dynamic>());
+  }
+
+  /// Marks a volunteer as having had food and logs the activity.
+  Future<ScanUpdateResult> markVolunteerFood(
+      String eventId, String volunteerId) async {
+    final vol = await fetchVolunteer(eventId, volunteerId);
+    if (vol == null) return ScanUpdateResult.error('Volunteer not found');
+
+    if (vol.foodStatus) {
+      return ScanUpdateResult.duplicate(
+          'Already collected food at ${_fmtTime(vol.foodTimestamp)}',
+          null,
+          vol);
+    }
+
+    final now = DateTime.now();
+    await _db.ref(AppConstants.volunteerPath(eventId, volunteerId)).update({
+      'foodStatus': true,
+      'foodTimestamp': now.millisecondsSinceEpoch,
+    });
+
+    await _logActivity(
+        eventId,
+        ActivityEntry(
+          teamId: volunteerId,
+          teamName: vol.name,
+          collegeName: 'Volunteer',
+          action: 'volunteer_food',
+          timestamp: now,
+        ));
+
+    return ScanUpdateResult.successVolunteer(vol.copyWith(
+      foodStatus: true,
+      foodTimestamp: now,
+    ));
   }
 
   // ── Status Updates ────────────────────────────────────────────────────────
@@ -181,20 +275,25 @@ enum ScanStatus { success, duplicate, teamNotFound, error }
 class ScanUpdateResult {
   final ScanStatus status;
   final TeamModel? team;
+  final VolunteerModel? volunteer;
   final String? message;
 
   const ScanUpdateResult._({
     required this.status,
     this.team,
+    this.volunteer,
     this.message,
   });
 
   factory ScanUpdateResult.success(TeamModel team) =>
       ScanUpdateResult._(status: ScanStatus.success, team: team);
 
-  factory ScanUpdateResult.duplicate(String msg, TeamModel team) =>
+  factory ScanUpdateResult.successVolunteer(VolunteerModel vol) =>
+      ScanUpdateResult._(status: ScanStatus.success, volunteer: vol);
+
+  factory ScanUpdateResult.duplicate(String msg, [TeamModel? team, VolunteerModel? vol]) =>
       ScanUpdateResult._(
-          status: ScanStatus.duplicate, team: team, message: msg);
+          status: ScanStatus.duplicate, team: team, volunteer: vol, message: msg);
 
   factory ScanUpdateResult.teamNotFound() =>
       ScanUpdateResult._(

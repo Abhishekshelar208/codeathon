@@ -9,7 +9,7 @@ import 'package:codeathon/services/firebase_service.dart';
 import 'package:codeathon/utils/validators.dart';
 import 'package:codeathon/screens/volunteer/volunteer_result_screen.dart';
 
-enum ScanMode { arrival, lunch }
+enum ScanMode { arrival, lunch, volunteerFood }
 
 class VolunteerScannerScreen extends StatefulWidget {
   final ScanMode mode;
@@ -121,10 +121,18 @@ class _VolunteerScannerScreenState extends State<VolunteerScannerScreen> {
       try {
         if (widget.mode == ScanMode.arrival) {
           result = await FirebaseService.instance
-              .markArrival(parsed.eventId!, parsed.teamId!);
-        } else {
+              .markArrival(parsed.eventId!, parsed.id!);
+        } else if (widget.mode == ScanMode.lunch) {
           result = await FirebaseService.instance
-              .markLunch(parsed.eventId!, parsed.teamId!);
+              .markLunch(parsed.eventId!, parsed.id!);
+        } else {
+          // Volunteer Food mode
+          if (!parsed.isVolunteer) {
+            errorMsg = "This is not a volunteer QR code.";
+          } else {
+            result = await FirebaseService.instance
+                .markVolunteerFood(parsed.eventId!, parsed.id!);
+          }
         }
       } catch (e) {
         result = ScanUpdateResult.error('Network error: $e');
@@ -159,11 +167,17 @@ class _VolunteerScannerScreenState extends State<VolunteerScannerScreen> {
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 
-  String get _modeLabel =>
-      widget.mode == ScanMode.arrival ? 'Entry Gate' : 'Lunch Area';
+  String get _modeLabel {
+    if (widget.mode == ScanMode.arrival) return 'Entry Gate';
+    if (widget.mode == ScanMode.lunch) return 'Lunch Area';
+    return 'Volunteer Food';
+  }
 
-  Color get _modeColor =>
-      widget.mode == ScanMode.arrival ? AppTheme.kPrimary : AppTheme.kWarning;
+  Color get _modeColor {
+    if (widget.mode == ScanMode.arrival) return AppTheme.kPrimary;
+    if (widget.mode == ScanMode.lunch) return AppTheme.kWarning;
+    return AppTheme.kAccent;
+  }
 
   bool get _permissionDenied =>
       _cameraError?.errorCode == MobileScannerErrorCode.permissionDenied;

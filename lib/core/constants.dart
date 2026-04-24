@@ -14,11 +14,17 @@ class AppConstants {
   static String eventMetaPath(String eventId) => 'events/$eventId/meta';
   static String activityLogPath(String eventId) =>
       'events/$eventId/activity_log';
+  static String volunteersPath(String eventId) => 'events/$eventId/volunteers';
+  static String volunteerPath(String eventId, String volunteerId) =>
+      'events/$eventId/volunteers/$volunteerId';
 
   // ── QR Payload ────────────────────────────────────────────────────────────
   /// Format: "eventId::teamId"
   static String buildQrPayload(String eventId, String teamId) =>
       '$eventId::$teamId';
+
+  static String buildVolunteerQrPayload(String eventId, String volId) =>
+      '$eventId::vol_$volId';
 
   static const String kQrDelimiter = '::';
 

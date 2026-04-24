@@ -27,7 +27,13 @@ class QrValidator {
           'QR belongs to a different event ($eventId)');
     }
 
-    return QrParseResult.valid(eventId: eventId, teamId: teamId);
+    final isVolunteer = teamId.startsWith('vol_');
+
+    return QrParseResult.valid(
+      eventId: eventId,
+      id: teamId,
+      isVolunteer: isVolunteer,
+    );
   }
 }
 
@@ -35,21 +41,29 @@ class QrValidator {
 class QrParseResult {
   final bool isValid;
   final String? eventId;
-  final String? teamId;
+  final String? id; // Can be teamId or volunteerId
+  final bool isVolunteer;
   final String? errorMessage;
 
   const QrParseResult._({
     required this.isValid,
     this.eventId,
-    this.teamId,
+    this.id,
+    this.isVolunteer = false,
     this.errorMessage,
   });
 
   factory QrParseResult.valid({
     required String eventId,
-    required String teamId,
+    required String id,
+    bool isVolunteer = false,
   }) =>
-      QrParseResult._(isValid: true, eventId: eventId, teamId: teamId);
+      QrParseResult._(
+        isValid: true,
+        eventId: eventId,
+        id: id,
+        isVolunteer: isVolunteer,
+      );
 
   factory QrParseResult.invalid(String message) =>
       QrParseResult._(isValid: false, errorMessage: message);

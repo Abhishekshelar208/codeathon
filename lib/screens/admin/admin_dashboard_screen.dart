@@ -10,6 +10,8 @@ import 'package:codeathon/widgets/activity_feed_widget.dart';
 import 'package:codeathon/screens/admin/admin_team_list_screen.dart';
 import 'package:codeathon/screens/admin/admin_qr_gallery_screen.dart';
 import 'package:codeathon/screens/admin/admin_upload_screen.dart';
+import 'package:codeathon/screens/admin/admin_volunteer_management_screen.dart';
+import 'package:codeathon/models/volunteer_model.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
   const AdminDashboardScreen({super.key});
@@ -160,6 +162,63 @@ class AdminDashboardScreen extends StatelessWidget {
                     ],
                   ).animate().fadeIn(delay: 500.ms),
 
+                  const SizedBox(height: 16),
+
+                  _actionButton(
+                    context,
+                    label: 'Volunteer Food Management',
+                    icon: Icons.person_add_rounded,
+                    color: AppTheme.kAccentLight,
+                    onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) =>
+                                const AdminVolunteerManagementScreen())),
+                  ).animate().fadeIn(delay: 550.ms),
+
+                  const SizedBox(height: 24),
+
+                  // Volunteer summary section
+                  StreamBuilder<List<VolunteerModel>>(
+                    stream: FirebaseService.instance
+                        .volunteersStream(AppConstants.kEventId),
+                    builder: (context, volSnap) {
+                      final vols = volSnap.data ?? [];
+                      final totalVols = vols.length;
+                      final foodVols = vols.where((v) => v.foodStatus).length;
+                      final pendingVols = totalVols - foodVols;
+
+                      return Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: AppTheme.kCard,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: AppTheme.kCardBorder),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Volunteer Food Tracking',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .headlineMedium),
+                            const SizedBox(height: 12),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                _simpleStat('Total', totalVols),
+                                _simpleStat('Food Taken', foodVols,
+                                    color: AppTheme.kSuccess),
+                                _simpleStat('Pending', pendingVols,
+                                    color: AppTheme.kPending),
+                              ],
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ).animate().fadeIn(delay: 600.ms),
+
                   const SizedBox(height: 24),
 
                   // Activity Feed
@@ -243,6 +302,7 @@ class AdminDashboardScreen extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
+        width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
           color: color.withOpacity(0.12),
@@ -254,11 +314,29 @@ class AdminDashboardScreen extends StatelessWidget {
             Icon(icon, color: color, size: 28),
             const SizedBox(height: 6),
             Text(label,
-              style: TextStyle(
-                color: color, fontWeight: FontWeight.w600, fontSize: 13)),
+                style: TextStyle(
+                    color: color, fontWeight: FontWeight.w600, fontSize: 13)),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _simpleStat(String label, int value, {Color? color}) {
+    return Column(
+      children: [
+        Text(value.toString(),
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: color ?? AppTheme.kTextPrimary,
+            )),
+        Text(label,
+            style: const TextStyle(
+              fontSize: 11,
+              color: AppTheme.kTextSecondary,
+            )),
+      ],
     );
   }
 }

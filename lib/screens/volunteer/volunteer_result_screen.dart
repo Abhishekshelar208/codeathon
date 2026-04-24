@@ -52,17 +52,25 @@ class _VolunteerResultScreenState extends State<VolunteerResultScreen> {
 
     switch (r.status) {
       case ScanStatus.success:
-        final action = widget.mode == ScanMode.arrival
-            ? 'Checked In ✓'
-            : 'Lunch Marked ✓';
+        String action;
+        if (widget.mode == ScanMode.arrival) {
+          action = 'Checked In ✓';
+        } else if (widget.mode == ScanMode.lunch) {
+          action = 'Lunch Marked ✓';
+        } else {
+          action = 'Food Marked ✓';
+        }
+
         return _ResultConfig(
           icon: Icons.check_circle_rounded,
           color: AppTheme.kSuccess,
           gradient: AppTheme.kSuccessGradient,
           title: action,
-          subtitle: r.team?.collegeName ?? '',
-          teamName: r.team?.teamName,
-          collegeName: r.team?.collegeName,
+          subtitle: r.team?.collegeName ??
+              (r.volunteer != null ? 'Official Volunteer' : ''),
+          teamName: r.team?.teamName ?? r.volunteer?.name,
+          collegeName: r.team?.collegeName ??
+              (r.volunteer != null ? 'Volunteer' : null),
         );
       case ScanStatus.duplicate:
         return _ResultConfig(
@@ -70,12 +78,14 @@ class _VolunteerResultScreenState extends State<VolunteerResultScreen> {
           color: AppTheme.kWarning,
           gradient: const LinearGradient(
             colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
-            begin: Alignment.topLeft, end: Alignment.bottomRight,
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
           title: 'Already Scanned',
           subtitle: r.message ?? '',
-          teamName: r.team?.teamName,
-          collegeName: r.team?.collegeName,
+          teamName: r.team?.teamName ?? r.volunteer?.name,
+          collegeName: r.team?.collegeName ??
+              (r.volunteer != null ? 'Volunteer' : null),
         );
       case ScanStatus.teamNotFound:
         return _ResultConfig(
