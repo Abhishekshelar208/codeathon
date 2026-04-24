@@ -45,5 +45,9 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Camera access is required to scan team QR codes at the event gates.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Photo library access is needed to save generated QR codes.</string>
 </dict>
 </plist>

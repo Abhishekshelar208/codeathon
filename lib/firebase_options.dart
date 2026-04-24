@@ -46,6 +46,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '727606836878',
     projectId: 'codeathon2',
     authDomain: 'codeathon2.firebaseapp.com',
+    databaseURL: 'https://codeathon2-default-rtdb.firebaseio.com',
     storageBucket: 'codeathon2.firebasestorage.app',
     measurementId: 'G-9R6H3880WT',
   );
@@ -55,6 +56,7 @@ class DefaultFirebaseOptions {
     appId: '1:727606836878:android:ad1343a6165091082593df',
     messagingSenderId: '727606836878',
     projectId: 'codeathon2',
+    databaseURL: 'https://codeathon2-default-rtdb.firebaseio.com',
     storageBucket: 'codeathon2.firebasestorage.app',
   );
 
@@ -82,6 +84,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '727606836878',
     projectId: 'codeathon2',
     authDomain: 'codeathon2.firebaseapp.com',
+    databaseURL: 'https://codeathon2-default-rtdb.firebaseio.com',
     storageBucket: 'codeathon2.firebasestorage.app',
     measurementId: 'G-ZM11EW0JRE',
   );
