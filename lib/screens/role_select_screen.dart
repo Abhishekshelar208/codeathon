@@ -26,7 +26,7 @@ class RoleSelectScreen extends StatelessWidget {
                       shaderCallback: (bounds) =>
                           AppTheme.kPrimaryGradient.createShader(bounds),
                       child: const Text(
-                        'Global Tech\nConference',
+                        'TrackFloww',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 34,
@@ -38,7 +38,7 @@ class RoleSelectScreen extends StatelessWidget {
                     ).animate().fadeIn(duration: 600.ms).slideY(begin: -0.2),
                     const SizedBox(height: 8),
                     Text(
-                      '2026 — Team Tracking System',
+                      'Team Tracker',
                       style: Theme.of(context).textTheme.bodyMedium,
                       textAlign: TextAlign.center,
                     ).animate().fadeIn(delay: 300.ms),
@@ -85,7 +85,7 @@ class RoleSelectScreen extends StatelessWidget {
 
                 const Spacer(),
 
-                Text('© 2026 Global Tech Conference',
+                Text('© 2026 TrackFloww',
                   style: Theme.of(context).textTheme.bodyMedium
                       ?.copyWith(color: AppTheme.kTextMuted, fontSize: 11),
                 ).animate().fadeIn(delay: 800.ms),

@@ -1,11 +1,11 @@
-/// Central constants for the Global Tech Conference tracking system.
+/// Central constants for the TrackFloww tracking system.
 /// To support a new event, update [kEventId] and [kEventName].
 class AppConstants {
   AppConstants._();
 
   // ── Event Identity ───────────────────────────────────────────────────────
   static const String kEventId = 'gtc2026';
-  static const String kEventName = 'Global Tech Conference 2026';
+  static const String kEventName = 'TrackFloww';
 
   // ── Firebase Paths ────────────────────────────────────────────────────────
   static String teamsPath(String eventId) => 'events/$eventId/teams';

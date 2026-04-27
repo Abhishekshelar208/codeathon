@@ -79,7 +79,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                     style: Theme.of(context).textTheme.displayMedium,
                   ).animate().fadeIn(delay: 200.ms),
                   const SizedBox(height: 8),
-                  Text('Global Tech Conference 2026',
+                  Text('TrackFloww',
                     style: Theme.of(context).textTheme.bodyMedium,
                     textAlign: TextAlign.center,
                   ).animate().fadeIn(delay: 300.ms),

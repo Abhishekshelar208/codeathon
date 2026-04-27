@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Design tokens for the Global Tech Conference app.
+/// Design tokens for the TrackFloww app.
 /// Deep-space dark with electric-cyan primary and violet accent.
 class AppTheme {
   AppTheme._();

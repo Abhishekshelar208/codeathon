@@ -24,16 +24,16 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  runApp(const GtcApp());
+  runApp(const TrackFlowwApp());
 }
 
-class GtcApp extends StatelessWidget {
-  const GtcApp({super.key});
+class TrackFlowwApp extends StatelessWidget {
+  const TrackFlowwApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'GTC 2026 — Team Tracker',
+      title: 'TrackFloww — Team Tracker',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
       home: const SplashScreen(),

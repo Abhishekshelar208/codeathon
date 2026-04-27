@@ -66,7 +66,7 @@ class _SplashScreenState extends State<SplashScreen> {
               const SizedBox(height: 28),
 
               Text(
-                'GTC 2026 (1.0)',
+                'TrackFloww (1.0)',
                 style: const TextStyle(
                   fontSize: 36,
                   fontWeight: FontWeight.w800,

@@ -46,7 +46,7 @@ class QrDownloader {
         await SharePlus.instance.share(
           ShareParams(
             files: [XFile.fromData(bytes, name: fileName, mimeType: 'image/png')],
-            text: 'QR Code for $teamName — Global Tech Conference 2026',
+            text: 'QR Code for $teamName — TrackFloww',
           ),
         );
         return; // Success
@@ -65,7 +65,7 @@ class QrDownloader {
       await SharePlus.instance.share(
         ShareParams(
           files: [XFile.fromData(bytes, name: fileName, mimeType: 'image/png')],
-          text: 'QR Code for $teamName — Global Tech Conference 2026',
+          text: 'QR Code for $teamName — TrackFloww',
           sharePositionOrigin: origin,
         ),
       );

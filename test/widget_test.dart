@@ -4,7 +4,7 @@ import 'package:codeathon/main.dart';
 
 void main() {
   testWidgets('App smoke test', (WidgetTester tester) async {
-    await tester.pumpWidget(const GtcApp());
+    await tester.pumpWidget(const TrackFlowwApp());
     expect(find.byType(MaterialApp), findsOneWidget);
   });
 }

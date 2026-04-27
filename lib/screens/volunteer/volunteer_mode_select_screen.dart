@@ -66,7 +66,7 @@ class VolunteerModeSelectScreen extends StatelessWidget {
 
             const Spacer(),
 
-            Text('Global Tech Conference 2026',
+            Text('TrackFloww',
               style: Theme.of(context).textTheme.bodyMedium
                   ?.copyWith(color: AppTheme.kTextMuted),
             ).animate().fadeIn(delay: 400.ms),
