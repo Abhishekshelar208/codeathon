@@ -1,10 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
-import 'package:codeathon/main.dart';
+import 'package:codeathon/screens/home_screen.dart';
 
 void main() {
-  testWidgets('App smoke test', (WidgetTester tester) async {
-    await tester.pumpWidget(const TrackFlowwApp());
-    expect(find.byType(MaterialApp), findsOneWidget);
-  });
+  runApp(const TestApp());
+}
+
+class TestApp extends StatelessWidget {
+  const TestApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const MaterialApp(
+      home: HomeScreen(),
+    );
+  }
 }

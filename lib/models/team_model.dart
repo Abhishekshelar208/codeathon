@@ -1,67 +1,44 @@
-/// Represents a single team participating in the event.
+/// Represents a single registered team in the GTC 2026 self-registration system.
 class TeamModel {
-  final String teamId;
-  final String eventId;
-  final String teamName;
-  final String collegeName;
-  final String leaderName;
-  final String leaderEmail;
-  final String leaderPhone;
-  final List<MemberModel> members;
-  final Map<String, String> extraAttributes;
-  final String qrPayload;
+  final String teamId;        // "T1", "T2", ...
+  final String paperId;       // unique paper/poster ID
+  final List<String> members; // up to 4 names (may be empty strings)
   final bool arrivalStatus;
   final DateTime? arrivalTimestamp;
   final bool lunchStatus;
   final DateTime? lunchTimestamp;
-  final int createdAt;
+  final String passcode;      // random 4-digit string
+  final int createdAt;        // epoch ms
 
   const TeamModel({
     required this.teamId,
-    required this.eventId,
-    required this.teamName,
-    required this.collegeName,
-    this.leaderName = '',
-    this.leaderEmail = '',
-    this.leaderPhone = '',
+    required this.paperId,
     required this.members,
-    this.extraAttributes = const {},
-    required this.qrPayload,
-    this.arrivalStatus = false,
+    this.arrivalStatus = true,
     this.arrivalTimestamp,
     this.lunchStatus = false,
     this.lunchTimestamp,
+    required this.passcode,
     required this.createdAt,
   });
 
+  // ── Serialisation ──────────────────────────────────────────────────────────
+
   factory TeamModel.fromJson(String teamId, Map<dynamic, dynamic> json) {
     final rawMembers = json['members'];
-    List<MemberModel> members = [];
+    List<String> members = [];
     if (rawMembers is List) {
       members = rawMembers
-          .whereType<Map>()
-          .map((m) => MemberModel.fromJson(m.cast<String, dynamic>()))
+          .map((m) => m?.toString() ?? '')
+          .where((m) => m.isNotEmpty)
           .toList();
-    }
-
-    final rawExtra = json['extraAttributes'];
-    Map<String, String> extra = {};
-    if (rawExtra is Map) {
-      extra = Map<String, String>.from(rawExtra);
     }
 
     return TeamModel(
       teamId: teamId,
-      eventId: json['eventId'] as String? ?? '',
-      teamName: json['teamName'] as String? ?? '',
-      collegeName: json['collegeName'] as String? ?? '',
-      leaderName: json['leaderName'] as String? ?? '',
-      leaderEmail: json['leaderEmail'] as String? ?? '',
-      leaderPhone: json['leaderPhone'] as String? ?? '',
+      paperId: json['paperId'] as String? ?? '',
       members: members,
-      extraAttributes: extra,
-      qrPayload: json['qrPayload'] as String? ?? '',
-      arrivalStatus: json['arrivalStatus'] as bool? ?? false,
+      arrivalStatus: json['arrivalStatus'] as bool? ?? true,
       arrivalTimestamp: json['arrivalTimestamp'] != null
           ? DateTime.fromMillisecondsSinceEpoch(
               (json['arrivalTimestamp'] as num).toInt())
@@ -71,6 +48,7 @@ class TeamModel {
           ? DateTime.fromMillisecondsSinceEpoch(
               (json['lunchTimestamp'] as num).toInt())
           : null,
+      passcode: json['passcode'] as String? ?? '',
       createdAt: (json['createdAt'] as num?)?.toInt() ??
           DateTime.now().millisecondsSinceEpoch,
     );
@@ -78,62 +56,45 @@ class TeamModel {
 
   Map<String, dynamic> toJson() => {
         'teamId': teamId,
-        'eventId': eventId,
-        'teamName': teamName,
-        'collegeName': collegeName,
-        'leaderName': leaderName,
-        'leaderEmail': leaderEmail,
-        'leaderPhone': leaderPhone,
-        'members': members.map((m) => m.toJson()).toList(),
-        'extraAttributes': extraAttributes,
-        'qrPayload': qrPayload,
+        'paperId': paperId,
+        'members': members,
         'arrivalStatus': arrivalStatus,
-        'arrivalTimestamp':
-            arrivalTimestamp?.millisecondsSinceEpoch,
+        'arrivalTimestamp': arrivalTimestamp?.millisecondsSinceEpoch,
         'lunchStatus': lunchStatus,
         'lunchTimestamp': lunchTimestamp?.millisecondsSinceEpoch,
+        'passcode': passcode,
         'createdAt': createdAt,
       };
 
   TeamModel copyWith({
-    bool? arrivalStatus,
-    DateTime? arrivalTimestamp,
     bool? lunchStatus,
     DateTime? lunchTimestamp,
   }) {
     return TeamModel(
       teamId: teamId,
-      eventId: eventId,
-      teamName: teamName,
-      collegeName: collegeName,
-      leaderName: leaderName,
-      leaderEmail: leaderEmail,
-      leaderPhone: leaderPhone,
+      paperId: paperId,
       members: members,
-      extraAttributes: extraAttributes,
-      qrPayload: qrPayload,
-      arrivalStatus: arrivalStatus ?? this.arrivalStatus,
-      arrivalTimestamp: arrivalTimestamp ?? this.arrivalTimestamp,
+      arrivalStatus: arrivalStatus,
+      arrivalTimestamp: arrivalTimestamp,
       lunchStatus: lunchStatus ?? this.lunchStatus,
       lunchTimestamp: lunchTimestamp ?? this.lunchTimestamp,
+      passcode: passcode,
       createdAt: createdAt,
     );
   }
-}
 
-/// Represents one member within a team.
-class MemberModel {
-  final String name;
-  final String email;
-  final String phone;
+  // ── Helpers ────────────────────────────────────────────────────────────────
 
-  const MemberModel({required this.name, this.email = '', this.phone = ''});
+  String get displayMembers =>
+      members.where((m) => m.isNotEmpty).join(', ');
 
-  factory MemberModel.fromJson(Map<String, dynamic> json) => MemberModel(
-        name: json['name'] as String? ?? '',
-        email: json['email'] as String? ?? '',
-        phone: json['phone'] as String? ?? '',
-      );
+  String get formattedArrivalTime => _fmt(arrivalTimestamp);
+  String get formattedLunchTime   => _fmt(lunchTimestamp);
 
-  Map<String, dynamic> toJson() => {'name': name, 'email': email, 'phone': phone};
+  static String _fmt(DateTime? dt) {
+    if (dt == null) return '--:--';
+    final h = dt.hour.toString().padLeft(2, '0');
+    final m = dt.minute.toString().padLeft(2, '0');
+    return '$h:$m';
+  }
 }

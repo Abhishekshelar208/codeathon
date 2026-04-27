@@ -4,17 +4,19 @@ import 'package:codeathon/core/app_theme.dart';
 import 'package:codeathon/core/constants.dart';
 import 'package:codeathon/models/team_model.dart';
 import 'package:codeathon/services/firebase_service.dart';
-import 'package:codeathon/widgets/stat_card_widget.dart';
-import 'package:codeathon/widgets/progress_ring_widget.dart';
-import 'package:codeathon/widgets/activity_feed_widget.dart';
-import 'package:codeathon/screens/admin/admin_team_list_screen.dart';
-import 'package:codeathon/screens/admin/admin_qr_gallery_screen.dart';
-import 'package:codeathon/screens/admin/admin_upload_screen.dart';
-import 'package:codeathon/screens/admin/admin_volunteer_management_screen.dart';
-import 'package:codeathon/models/volunteer_model.dart';
+import 'package:codeathon/screens/admin/lunch_qr_screen.dart';
+import 'package:codeathon/screens/admin/gate_qr_screen.dart';
 
-class AdminDashboardScreen extends StatelessWidget {
+/// Admin dashboard — real-time overview of all registrations and lunch status.
+class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
+
+  @override
+  State<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
+}
+
+class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
+  String _filter = 'all'; // 'all' | 'pending' | 'lunch'
 
   @override
   Widget build(BuildContext context) {
@@ -22,320 +24,394 @@ class AdminDashboardScreen extends StatelessWidget {
       appBar: AppBar(
         title: Column(
           children: [
-            const Text('Command Centre'),
-            Text(AppConstants.kEventName,
+            const Text('Admin Dashboard'),
+            Text(
+              AppConstants.kEventName,
               style: const TextStyle(
-                fontSize: 11, color: AppTheme.kTextSecondary),
+                  fontSize: 11, color: AppTheme.kTextSecondary),
             ),
           ],
         ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+          onPressed: () => Navigator.pop(context),
+        ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.upload_file_rounded),
-            tooltip: 'Upload Excel',
-            onPressed: () => Navigator.push(context,
-                MaterialPageRoute(builder: (_) => const AdminUploadScreen())),
+          // ── Gate QR Button ──
+          Tooltip(
+            message: 'Generate Gate QR',
+            child: InkWell(
+              borderRadius: BorderRadius.circular(10),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const GateQrScreen()),
+              ),
+              child: Container(
+                margin: const EdgeInsets.symmetric(vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppTheme.kPrimary.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppTheme.kPrimary.withOpacity(0.4)),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.door_front_door_rounded, color: AppTheme.kPrimary, size: 18),
+                    SizedBox(width: 5),
+                    Text(
+                      'Gate QR',
+                      style: TextStyle(color: AppTheme.kPrimary, fontSize: 12, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(width: 4),
+
+          // ── Generate Lunch QR button ─────────────────────────
+          Tooltip(
+            message: 'Generate Lunch QR',
+            child: InkWell(
+              borderRadius: BorderRadius.circular(10),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => const LunchQrScreen()),
+              ),
+              child: Container(
+                margin: const EdgeInsets.only(right: 12, top: 8, bottom: 8),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppTheme.kSuccess.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                      color: AppTheme.kSuccess.withOpacity(0.4)),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.qr_code_2_rounded,
+                        color: AppTheme.kSuccess, size: 18),
+                    SizedBox(width: 5),
+                    Text(
+                      'Lunch QR',
+                      style: TextStyle(
+                        color: AppTheme.kSuccess,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ],
       ),
       body: StreamBuilder<List<TeamModel>>(
-        stream: FirebaseService.instance.teamsStream(AppConstants.kEventId),
+        stream:
+            FirebaseService.instance.teamsStream(AppConstants.kEventId),
         builder: (context, snapshot) {
-          final teams = snapshot.data ?? [];
-          final total   = teams.length;
-          final arrived = teams.where((t) => t.arrivalStatus).length;
-          final lunch   = teams.where((t) => t.lunchStatus).length;
-          final pending = total - arrived;
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(
+              child: CircularProgressIndicator(color: AppTheme.kAccent),
+            );
+          }
 
-          return RefreshIndicator(
-            color: AppTheme.kPrimary,
-            onRefresh: () async {},
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Connection status indicator
-                  if (snapshot.connectionState == ConnectionState.waiting)
-                    const LinearProgressIndicator(
-                      color: AppTheme.kPrimary,
-                      backgroundColor: AppTheme.kCard,
-                    ),
+          final allTeams = snapshot.data ?? [];
+          final arrived = allTeams.length; // all registered = arrived
+          final lunchDone =
+              allTeams.where((t) => t.lunchStatus).length;
+          final lunchPending = arrived - lunchDone;
 
-                  // Stat cards grid
-                  GridView.count(
-                    crossAxisCount: 2,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    mainAxisSpacing: 12,
-                    crossAxisSpacing: 12,
-                    childAspectRatio: 1.25,
-                    children: [
-                      StatCardWidget(
-                        label: 'Total Teams',
-                        value: total,
-                        total: total == 0 ? 1 : total,
-                        color: AppTheme.kAccentLight,
-                        icon: Icons.groups_rounded,
-                        animationDelay: 0,
-                      ),
-                      StatCardWidget(
-                        label: 'Arrived',
-                        value: arrived,
-                        total: total == 0 ? 1 : total,
-                        color: AppTheme.kPrimary,
-                        icon: Icons.login_rounded,
-                        animationDelay: 100,
-                      ),
-                      StatCardWidget(
-                        label: 'Pending',
-                        value: pending,
-                        total: total == 0 ? 1 : total,
-                        color: AppTheme.kPending,
-                        icon: Icons.hourglass_empty_rounded,
-                        animationDelay: 200,
-                      ),
-                      StatCardWidget(
-                        label: 'Had Lunch',
-                        value: lunch,
-                        total: total == 0 ? 1 : total,
-                        color: AppTheme.kSuccess,
-                        icon: Icons.restaurant_rounded,
-                        animationDelay: 300,
-                      ),
-                    ],
-                  ),
+          final filtered = _filter == 'pending'
+              ? allTeams.where((t) => !t.lunchStatus).toList()
+              : _filter == 'lunch'
+                  ? allTeams.where((t) => t.lunchStatus).toList()
+                  : allTeams;
 
-                  const SizedBox(height: 24),
-
-                  // Donut chart
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: AppTheme.kCard,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppTheme.kCardBorder),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Attendance Overview',
-                          style: Theme.of(context).textTheme.headlineMedium),
-                        const SizedBox(height: 16),
-                        ProgressRingWidget(
-                          arrived: arrived, lunch: lunch, total: total),
-                        const SizedBox(height: 16),
-                        _buildLegend(),
-                      ],
-                    ),
-                  ).animate().fadeIn(delay: 400.ms),
-
-                  const SizedBox(height: 16),
-
-                  // Quick action buttons
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _actionButton(
-                          context,
-                          label: 'Team List',
-                          icon: Icons.list_alt_rounded,
-                          color: AppTheme.kPrimary,
-                          onTap: () => Navigator.push(context,
-                              MaterialPageRoute(
-                                  builder: (_) => const AdminTeamListScreen())),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _actionButton(
-                          context,
-                          label: 'QR Gallery',
-                          icon: Icons.qr_code_2_rounded,
-                          color: AppTheme.kAccent,
-                          onTap: () => Navigator.push(context,
-                              MaterialPageRoute(
-                                  builder: (_) => const AdminQrGalleryScreen())),
-                        ),
-                      ),
-                    ],
-                  ).animate().fadeIn(delay: 500.ms),
-
-                  const SizedBox(height: 16),
-
-                  _actionButton(
-                    context,
-                    label: 'Volunteer Food Management',
-                    icon: Icons.person_add_rounded,
-                    color: AppTheme.kAccentLight,
-                    onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (_) =>
-                                const AdminVolunteerManagementScreen())),
-                  ).animate().fadeIn(delay: 550.ms),
-
-                  const SizedBox(height: 24),
-
-                  // Volunteer summary section
-                  StreamBuilder<List<VolunteerModel>>(
-                    stream: FirebaseService.instance
-                        .volunteersStream(AppConstants.kEventId),
-                    builder: (context, volSnap) {
-                      final vols = volSnap.data ?? [];
-                      final totalVols = vols.length;
-                      final foodVols = vols.where((v) => v.foodStatus).length;
-                      final pendingVols = totalVols - foodVols;
-
-                      return Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: AppTheme.kCard,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: AppTheme.kCardBorder),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Volunteer Food Tracking',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .headlineMedium),
-                            const SizedBox(height: 12),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                _simpleStat('Total', totalVols),
-                                _simpleStat('Food Taken', foodVols,
-                                    color: AppTheme.kSuccess),
-                                _simpleStat('Pending', pendingVols,
-                                    color: AppTheme.kPending),
-                              ],
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ).animate().fadeIn(delay: 600.ms),
-
-                  const SizedBox(height: 24),
-
-                  // Activity Feed
-                  Container(
-                    decoration: BoxDecoration(
-                      color: AppTheme.kCard,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppTheme.kCardBorder),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                          child: Text('Live Activity',
-                            style:
-                                Theme.of(context).textTheme.headlineMedium),
-                        ),
-                        const SizedBox(height: 8),
-                        StreamBuilder<List<ActivityEntry>>(
-                          stream: FirebaseService.instance
-                              .activityStream(AppConstants.kEventId),
-                          builder: (ctx, snap) {
-                            final entries = snap.data ?? [];
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 8),
-                              child: ActivityFeedWidget(entries: entries),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                  ).animate().fadeIn(delay: 600.ms),
-
-                  const SizedBox(height: 24),
-                ],
+          return Column(
+            children: [
+              // ── Stats Row ────────────────────────────────────────────────
+              _StatsRow(
+                total: arrived,
+                lunchDone: lunchDone,
+                lunchPending: lunchPending,
               ),
-            ),
+
+              // ── Filter Chips ─────────────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16, vertical: 6),
+                child: Row(
+                  children: [
+                    _chip('All', 'all'),
+                    const SizedBox(width: 8),
+                    _chip('Lunch Pending', 'pending'),
+                    const SizedBox(width: 8),
+                    _chip('Lunch Done', 'lunch'),
+                  ],
+                ),
+              ),
+
+              // ── Count ────────────────────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16, vertical: 4),
+                child: Row(
+                  children: [
+                    Text(
+                      '${filtered.length} team${filtered.length == 1 ? '' : 's'}',
+                      style: const TextStyle(
+                          color: AppTheme.kTextMuted, fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+
+              // ── Team List ─────────────────────────────────────────────────
+              Expanded(
+                child: filtered.isEmpty
+                    ? const Center(
+                        child: Text('No teams yet.',
+                            style: TextStyle(
+                                color: AppTheme.kTextSecondary)),
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+                        itemCount: filtered.length,
+                        itemBuilder: (ctx, i) =>
+                            _AdminTeamTile(team: filtered[i], index: i),
+                      ),
+              ),
+            ],
           );
         },
       ),
     );
   }
 
-  Widget _buildLegend() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        _legendDot(AppTheme.kSuccess, 'Lunch Done'),
-        const SizedBox(width: 16),
-        _legendDot(AppTheme.kPrimary, 'Arrived'),
-        const SizedBox(width: 16),
-        _legendDot(AppTheme.kCardBorder, 'Pending'),
-      ],
-    );
-  }
-
-  Widget _legendDot(Color color, String label) {
-    return Row(
-      children: [
-        Container(
-          width: 10, height: 10,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-        ),
-        const SizedBox(width: 6),
-        Text(label,
-          style: const TextStyle(
-            fontSize: 11, color: AppTheme.kTextSecondary)),
-      ],
-    );
-  }
-
-  Widget _actionButton(
-    BuildContext context, {
-    required String label,
-    required IconData icon,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
+  Widget _chip(String label, String value) {
+    final selected = _filter == value;
     return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 16),
+      onTap: () => setState(() => _filter = value),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.12),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: color.withOpacity(0.3)),
+          color: selected
+              ? AppTheme.kAccent.withOpacity(0.15)
+              : AppTheme.kCard,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: selected
+                ? AppTheme.kAccent
+                : AppTheme.kCardBorder,
+            width: selected ? 1.5 : 1,
+          ),
         ),
-        child: Column(
-          children: [
-            Icon(icon, color: color, size: 28),
-            const SizedBox(height: 6),
-            Text(label,
-                style: TextStyle(
-                    color: color, fontWeight: FontWeight.w600, fontSize: 13)),
-          ],
+        child: Text(
+          label,
+          style: TextStyle(
+            color:
+                selected ? AppTheme.kAccent : AppTheme.kTextSecondary,
+            fontSize: 12,
+            fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
+          ),
         ),
       ),
     );
   }
+}
 
-  Widget _simpleStat(String label, int value, {Color? color}) {
-    return Column(
+// ── Stats Row ─────────────────────────────────────────────────────────────────
+
+class _StatsRow extends StatelessWidget {
+  final int total, lunchDone, lunchPending;
+  const _StatsRow(
+      {required this.total,
+      required this.lunchDone,
+      required this.lunchPending});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.kAccent.withOpacity(0.12),
+            AppTheme.kPrimary.withOpacity(0.08),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.kAccent.withOpacity(0.25)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _stat('Registered', total, AppTheme.kPrimary),
+          _divider(),
+          _stat('Lunch Done', lunchDone, AppTheme.kSuccess),
+          _divider(),
+          _stat('Pending', lunchPending, AppTheme.kWarning),
+        ],
+      ),
+    ).animate().fadeIn(delay: 50.ms);
+  }
+
+  Widget _stat(String label, int val, Color color) => Column(
+        children: [
+          Text(val.toString(),
+              style: TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.w800,
+                  color: color)),
+          Text(label,
+              style: const TextStyle(
+                  fontSize: 11, color: AppTheme.kTextSecondary)),
+        ],
+      );
+
+  Widget _divider() =>
+      Container(height: 36, width: 1, color: AppTheme.kCardBorder);
+}
+
+// ── Admin Team Tile ───────────────────────────────────────────────────────────
+
+class _AdminTeamTile extends StatelessWidget {
+  final TeamModel team;
+  final int index;
+  const _AdminTeamTile({required this.team, required this.index});
+
+  @override
+  Widget build(BuildContext context) {
+    final lunchDone = team.lunchStatus;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppTheme.kCard,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: lunchDone
+              ? AppTheme.kSuccess.withOpacity(0.35)
+              : AppTheme.kCardBorder,
+        ),
+      ),
+      child: Row(
+        children: [
+          // Team ID badge
+          Container(
+            width: 48, height: 48,
+            decoration: BoxDecoration(
+              gradient: lunchDone
+                  ? AppTheme.kSuccessGradient
+                  : AppTheme.kPrimaryGradient,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              team.teamId,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+                fontSize: 13,
+              ),
+            ),
+          ),
+
+          const SizedBox(width: 12),
+
+          // Info
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      'Paper: ${team.paperId}',
+                      style: const TextStyle(
+                        color: AppTheme.kTextPrimary,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 7, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppTheme.kAccent.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        'Pass: ${team.passcode}',
+                        style: const TextStyle(
+                          color: AppTheme.kAccentLight,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 3),
+                if (team.members.isNotEmpty)
+                  Text(
+                    team.displayMembers,
+                    style: const TextStyle(
+                        color: AppTheme.kTextSecondary, fontSize: 12),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    _badge(
+                      Icons.login_rounded,
+                      'Arrived ${team.formattedArrivalTime}',
+                      AppTheme.kPrimary,
+                    ),
+                    const SizedBox(width: 8),
+                    _badge(
+                      lunchDone
+                          ? Icons.check_circle_rounded
+                          : Icons.hourglass_empty_rounded,
+                      lunchDone
+                          ? 'Lunch ${team.formattedLunchTime}'
+                          : 'No lunch',
+                      lunchDone ? AppTheme.kSuccess : AppTheme.kTextMuted,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    )
+        .animate()
+        .fadeIn(delay: Duration(milliseconds: 60 + index * 35))
+        .slideX(begin: 0.05, curve: Curves.easeOut);
+  }
+
+  Widget _badge(IconData icon, String label, Color color) {
+    return Row(
       children: [
-        Text(value.toString(),
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: color ?? AppTheme.kTextPrimary,
-            )),
+        Icon(icon, size: 12, color: color),
+        const SizedBox(width: 3),
         Text(label,
-            style: const TextStyle(
-              fontSize: 11,
-              color: AppTheme.kTextSecondary,
-            )),
+            style: TextStyle(
+                color: color, fontSize: 11, fontWeight: FontWeight.w500)),
       ],
     );
   }

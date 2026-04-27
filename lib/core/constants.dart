@@ -1,41 +1,30 @@
-/// Central constants for the TrackFloww tracking system.
-/// To support a new event, update [kEventId] and [kEventName].
+/// Central constants for the GTC 2026 self-registration tracking system.
 class AppConstants {
   AppConstants._();
 
   // ── Event Identity ───────────────────────────────────────────────────────
-  static const String kEventId = 'gtc2026';
-  static const String kEventName = 'TrackFloww';
+  static const String kEventId   = 'gtc2026';
+  static const String kEventName = 'Global Tech Conference 2026';
 
   // ── Firebase Paths ────────────────────────────────────────────────────────
-  static String teamsPath(String eventId) => 'events/$eventId/teams';
-  static String teamPath(String eventId, String teamId) =>
-      'events/$eventId/teams/$teamId';
-  static String eventMetaPath(String eventId) => 'events/$eventId/meta';
-  static String activityLogPath(String eventId) =>
-      'events/$eventId/activity_log';
-  static String volunteersPath(String eventId) => 'events/$eventId/volunteers';
-  static String volunteerPath(String eventId, String volunteerId) =>
-      'events/$eventId/volunteers/$volunteerId';
+  static String teamsPath(String eventId)              => 'events/$eventId/teams';
+  static String teamPath(String eventId, String teamId)=> 'events/$eventId/teams/$teamId';
+  static String counterPath(String eventId)            => 'events/$eventId/meta/teamCounter';
 
-  // ── QR Payload ────────────────────────────────────────────────────────────
-  /// Format: "eventId::teamId"
-  static String buildQrPayload(String eventId, String teamId) =>
-      '$eventId::$teamId';
+  // ── Security ──────────────────────────────────────────────────────────────
+  /// PIN entered by volunteer at entry gate to authorize a new registration.
+  static const String kVerificationPin = '8488';
 
-  static String buildVolunteerQrPayload(String eventId, String volId) =>
-      '$eventId::vol_$volId';
-
-  static const String kQrDelimiter = '::';
-
-  // ── Admin Auth ────────────────────────────────────────────────────────────
-  /// Hardcoded admin PIN for the event.  Change before go-live.
+  /// Admin dashboard access PIN.
   static const String kAdminPin = '1234';
 
   // ── Timing ───────────────────────────────────────────────────────────────
-  /// How long the scan-result overlay stays visible before auto-dismiss.
   static const Duration kResultAutoDismiss = Duration(seconds: 3);
 
-  // ── Activity Log ─────────────────────────────────────────────────────────
-  static const int kActivityFeedMax = 20;
+  // ── QR Payload Identifiers ────────────────────────────────────────────────
+  /// Value encoded inside the Gate QR (Registration QR).
+  static const String kGateQrPayload  = 'gtc2026::gate';
+
+  /// Value encoded inside the Lunch QR.
+  static const String kLunchQrPayload = 'gtc2026::lunch';
 }

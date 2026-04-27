@@ -8,7 +8,7 @@ import 'package:codeathon/screens/splash_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Force portrait orientation only
+  // Portrait only
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
@@ -24,16 +24,16 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  runApp(const TrackFlowwApp());
+  runApp(const GtcApp());
 }
 
-class TrackFlowwApp extends StatelessWidget {
-  const TrackFlowwApp({super.key});
+class GtcApp extends StatelessWidget {
+  const GtcApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'TrackFloww — Team Tracker',
+      title: 'GTC 2026 — Self Registration',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
       home: const SplashScreen(),
