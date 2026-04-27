@@ -23,7 +23,7 @@ class AppConstants {
 
   // ── QR Payload Identifiers ────────────────────────────────────────────────
   /// Value encoded inside the Gate QR (Registration QR).
-  static const String kGateQrPayload  = 'gtc2026::gate';
+  static const String kGateQrPayload  = 'https://codeathon2.web.app';
 
   /// Value encoded inside the Lunch QR.
   static const String kLunchQrPayload = 'gtc2026::lunch';

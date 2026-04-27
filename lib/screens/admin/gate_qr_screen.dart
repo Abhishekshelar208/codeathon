@@ -228,6 +228,20 @@ class _GateQrPoster extends StatelessWidget {
                 _stepRow('3', 'Show your screen to the Volunteer at the gate.'),
                 _stepRow('4', 'Volunteer will verify and confirm your entry.'),
                 _stepRow('5', 'IMPORTANT: Screenshot your Team ID and Passcode!'),
+                const SizedBox(height: 20),
+                const Divider(color: Color(0xFFE2E8F0)),
+                const SizedBox(height: 10),
+                const Center(
+                  child: Text(
+                    'Direct Link: https://codeathon2.web.app',
+                    style: TextStyle(
+                      color: Color(0xFF4F46E5),
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
